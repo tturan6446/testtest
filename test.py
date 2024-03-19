@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 from io import BytesIO  # Excel dosyasını bellekte tutmak için
+import openpyxl
 
 
 # Fonksiyon tanımlamaları
@@ -28,7 +29,7 @@ def atama_yap(vardiya_plani_df, personel_listesi):
 #off planı Oktay Bey'den gelmeli
 #Vardiya şekli böyle mi olmalı ?
 #Hem çalışan hem de gün bazlı özet gösterim olmalı
-
+#Sabah saatlerinde vardiya çıktısı çok doğru değil, kontrol edilmeli
 def sonuclari_excel_olarak_indir(personel_programi):
     tum_personellerin_programi = pd.DataFrame()
     toplam_calisma_saatleri = []
