@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 from io import BytesIO  # Excel dosyasını bellekte tutmak için
-import openpyxl
 
 
 # Fonksiyon tanımlamaları
