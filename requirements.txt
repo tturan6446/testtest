@@ -57,7 +57,6 @@ pyparsing
 python-dateutil
 python-git
 pytz
-pywin32
 pyzmq
 referencing
 reportlab
