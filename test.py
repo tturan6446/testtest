@@ -1,9 +1,15 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import os
-from io import BytesIO  # Excel dosyasını bellekte tutmak için
+import boto3
+from io import BytesIO
 
+# AWS S3'ten dosya indirme fonksiyonu
+def s3_dosya_indir(bucket_name, object_key):
+    s3 = boto3.client('s3')
+    obj = s3.get_object(Bucket=bucket_name, Key=object_key)
+    data = obj['Body'].read()
+    return BytesIO(data)
 
 # Fonksiyon tanımlamaları
 def atama_yap(vardiya_plani_df, personel_listesi):
@@ -22,39 +28,25 @@ def atama_yap(vardiya_plani_df, personel_listesi):
                     break
     return personel_programi
 
-#Sabah 8 kısıtı eklenmeli
-#Ek sayfada plan olacak
-#Buraya off günleri belirtilmeli ya da off günleri buraya kısıt verilerek çıkarılmalı
-#off planı Oktay Bey'den gelmeli
-#Vardiya şekli böyle mi olmalı ?
-#Hem çalışan hem de gün bazlı özet gösterim olmalı
-#Sabah saatlerinde vardiya çıktısı çok doğru değil, kontrol edilmeli
 def sonuclari_excel_olarak_indir(personel_programi):
     tum_personellerin_programi = pd.DataFrame()
     toplam_calisma_saatleri = []
 
     for personel, gunler in personel_programi.items():
-        # İlk olarak, saatler ve günler için boş bir liste hazırlayalım
         saat_dilimleri = sorted(list(set([saat for gun in gunler.values() for saat in gun])))
-        data = {'Personel': personel, 'Gün': [], **{saat: [] for saat in saat_dilimleri}}  # Personel ve Gün sütunlarını oluştur
+        data = {'Personel': personel, 'Gün': [], **{saat: [] for saat in saat_dilimleri}}
         
-        # Her personelin toplam çalışma saatini hesapla
         toplam_saat = sum(len(saatler) for saatler in gunler.values())
         toplam_calisma_saatleri.append({'Personel': personel, 'Toplam Çalışma Saati': toplam_saat})
         
-        # Her gün ve her saat için personelin çalışma durumunu kontrol et
         for gun in ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar']:
             data['Gün'].append(gun)
             for saat in saat_dilimleri:
                 data[saat].append('X' if saat in gunler[gun] else '')
         
-        # Şu ana kadar topladığımız verileri bir DataFrame'e dönüştürelim
         personel_df = pd.DataFrame(data)
-        
-        # Bu DataFrame'i tüm personellerin programlarını tutan büyük DataFrame'e ekleyelim
-        tum_personellerin_programi = pd.concat([tum_personellerin_programi, personel_df, pd.DataFrame([['']*(len(saat_dilimleri)+2)], columns=['Personel', 'Gün', *saat_dilimleri])])  # Her personel arasına boş bir satır ekleyelim
+        tum_personellerin_programi = pd.concat([tum_personellerin_programi, personel_df, pd.DataFrame([['']*(len(saat_dilimleri)+2)], columns=['Personel', 'Gün', *saat_dilimleri])])
 
-    # Bellekte bir Excel dosyası oluştur
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         tum_personellerin_programi.to_excel(writer, index=False, sheet_name='Vardiya Planı')
@@ -62,6 +54,7 @@ def sonuclari_excel_olarak_indir(personel_programi):
     
     processed_data = output.getvalue()
     return processed_data
+
 # Ana Streamlit uygulaması
 st.image("https://www.filmon.com.tr/wp-content/uploads/2022/01/divan-logo.png", width=200)
 st.title('Smart Shift Planner')
@@ -79,30 +72,33 @@ if st.button('Giriş Yap') or st.session_state['login_successful']:
         
         uploaded_personel_listesi = st.file_uploader("Çalışanların Excel dosyasını yükle", type=['xlsx'], key="personel_uploader")
         if uploaded_personel_listesi is not None:
-            df_uploaded_personel = pd.read_excel(uploaded_personel_listesi, usecols=['Ad Soyad'])
+            df_uploaded_personel = pd.read_excel
+            uploaded_personel_listesi, usecols=['Ad Soyad'])
             personel_listesi = df_uploaded_personel['Ad Soyad'].tolist()
             st.write('Yüklenen personel listesi başarıyla alındı.')
             st.dataframe(df_uploaded_personel)
 
-            downloads_path = os.path.join(os.path.expanduser('~'), 'Downloads')
-            vardiya_plani_dosyasi = os.path.join(downloads_path, '7_gunluk_vardiya_plani.xlsx')
-            if os.path.exists(vardiya_plani_dosyasi):
-                df_vardiya_plani = pd.read_excel(vardiya_plani_dosyasi, header=0, index_col=0)
-                st.success('7 günlük vardiya planı dosyası başarıyla okundu.')
-                #st.dataframe(df_vardiya_plani)
-                
-                # Atama fonksiyonunu çağır
-                personel_programi = atama_yap(df_vardiya_plani, personel_listesi)
-                
-                # Excel dosyası olarak sonuçları indir
-                excel_data = sonuclari_excel_olarak_indir(personel_programi)
-                st.download_button(label="Atama Sonuçlarını Excel olarak indir",
-                                   data=excel_data,
-                                   file_name="vardiya_planı.xlsx",
-                                   mime="application/vnd.ms-excel")
-                st.dataframe(personel_programi)
-            else:
-                st.error('7 günlük vardiya planı dosyası bulunamadı.')
+            # S3'ten vardiya planını indir
+            bucket_name = 'testssp'
+            object_key = '7_gunluk_vardiya_plani.xlsx'
+            
+            # S3'den dosyayı belleğe indir
+            excel_io = s3_dosya_indir(bucket_name, object_key)
+            df_vardiya_plani = pd.read_excel(excel_io, header=0, index_col=0)
+            st.success('7 günlük vardiya planı dosyası başarıyla S3\'ten indirildi ve okundu.')
+            # st.dataframe(df_vardiya_plani)
+            
+            # Atama fonksiyonunu çağır
+            personel_programi = atama_yap(df_vardiya_plani, personel_listesi)
+            
+            # Excel dosyası olarak sonuçları indir
+            excel_data = sonuclari_excel_olarak_indir(personel_programi)
+            st.download_button(label="Atama Sonuçlarını Excel olarak indir",
+                               data=excel_data,
+                               file_name="vardiya_planı.xlsx",
+                               mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        else:
+            st.error('Personel listesi yüklenmedi.')
     else:
         st.session_state['login_successful'] = False
         st.error('Giriş başarısız. Lütfen tekrar deneyin.')
