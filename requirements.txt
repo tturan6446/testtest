@@ -23,7 +23,7 @@ GitPython==3.1.40
 idna==3.6
 importlib-metadata==6.11.0
 ipykernel==6.28.0
-ipython==8.20.0
+ipython==8.18.1
 jedi==0.19.1
 Jinja2==3.1.2
 jsonschema==4.20.0
