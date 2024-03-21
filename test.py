@@ -100,6 +100,7 @@ if st.button('Giriş Yap') or st.session_state['login_successful']:
                                    data=excel_data,
                                    file_name="vardiya_planı.xlsx",
                                    mime="application/vnd.ms-excel")
+                st.dataframe(personel_programi)
             else:
                 st.error('7 günlük vardiya planı dosyası bulunamadı.')
     else:
