@@ -65,4 +65,4 @@ if st.button('Giriş Yap') or st.session_state['login_successful']:
                                file_name="vardiya_planı.xlsx",
                                mime="application/vnd.ms-excel")
         else:
-            st.error('Lütfen bir personel listesi dosyası yükleyin
+             st.error('Lütfen bir personel listesi dosyası yükleyin
