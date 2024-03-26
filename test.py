@@ -25,8 +25,8 @@ def sonuclari_excel_olarak_indir(personel_programi):
     # Bu fonksiyonun içeriği aynı kalıyor, detaylar atlandı
 
 # Ana Streamlit uygulaması
-st.image("https://www.filmon.com.tr/wp-content/uploads/2022/01/divan-logo.png", width=200)
-st.title('Smart Shift Planner')
+ st.image("https://www.filmon.com.tr/wp-content/uploads/2022/01/divan-logo.png", width=200)
+ st.title('Smart Shift Planner')
 
 user = st.text_input('Kullanıcı Adı')
 password = st.text_input('Şifre', type='password')
