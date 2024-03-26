@@ -73,9 +73,19 @@ password = st.text_input('Şifre', type='password')
  
 if 'login_successful' not in st.session_state:
     st.session_state['login_successful'] = False
+
+kullanici_bilgileri = {
+    'admin': '12345',
+    'tolgat': '12345',
+    'turgutk' : '12345',
+    'elifc'  : '12345',
+    'dogana' : '12345',
+    'akasyabrasserie' : '12345'
+}
  
 if st.button('Giriş Yap') or st.session_state['login_successful']:
-    if user == 'admin' and password == '12345':
+    # Kullanıcı adının ve şifrenin doğruluğunu kontrol et
+    if user in kullanici_bilgileri and password == kullanici_bilgileri[user]:
         st.session_state['login_successful'] = True
         st.success('Giriş başarılı!')
        
