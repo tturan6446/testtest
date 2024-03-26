@@ -3,26 +3,9 @@ import pandas as pd
 import numpy as np
 import os
 from io import BytesIO  # Excel dosyasını bellekte tutmak için
-import requests
  
  
-# GitHub'dan dosyayı indirme fonksiyonu
-
-def github_dan_dosya_indir(url):
-    try:
-        # SSL Doğrulamasını devre dışı bırak
-        response = requests.get(url, verify=False)
-        if response.status_code == 200:
-            return pd.read_excel(BytesIO(response.content))
-        else:
-            return None
-    except Exception as e:
-        print(f"İstisna oluştu: {e}")
-        return None
-    
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)   
-    
+ 
 # Fonksiyon tanımlamaları
 def atama_yap(vardiya_plani_df, personel_listesi):
     personel_programi = {personel: {'Pazartesi': [], 'Salı': [], 'Çarşamba': [], 'Perşembe': [], 'Cuma': [], 'Cumartesi': [], 'Pazar': []} for personel in personel_listesi}
@@ -103,13 +86,15 @@ if st.button('Giriş Yap') or st.session_state['login_successful']:
             st.write('Yüklenen personel listesi başarıyla alındı.')
             st.dataframe(df_uploaded_personel)
  
-               # GitHub'dan vardiya planı dosyasını indir
-            github_url = 'https://github.com/tturan6446/testtest/raw/main/7_gunluk_vardiya_plani.xlsx'
-            df_vardiya_plani = github_dan_dosya_indir(github_url)
-            if df_vardiya_plani is not None:
-                st.success('GitHub üzerinden 7 günlük vardiya planı dosyası başarıyla indirildi ve okundu.')
+            
+            vardiya_plani_dosyasi =  r'C:\Users\tolga.turan\OneDrive - DİVAN TURİZM İŞLETMELERİ A.Ş\Desktop\smartshiftplan1\7_gunluk_vardiya_plani.xlsx'
+            if os.path.exists(vardiya_plani_dosyasi):
+                df_vardiya_plani = pd.read_excel(vardiya_plani_dosyasi, header=2, index_col=0)
+                df_vardiya_plani.columns = ['00:00', '01:00', '02:00', '03:00', '04:00', '05:00', '06:00', '07:00', '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'] 
+                st.success('7 günlük vardiya planı dosyası başarıyla okundu.')
                 st.dataframe(df_vardiya_plani)
-               
+                st.write(df_vardiya_plani.index)
+                st.write(df_vardiya_plani.columns)
                 # Atama fonksiyonunu çağır
                 personel_programi = atama_yap(df_vardiya_plani, personel_listesi)
                
@@ -122,7 +107,7 @@ if st.button('Giriş Yap') or st.session_state['login_successful']:
                                    file_name="vardiya_planı.xlsx",
                                    mime="application/vnd.ms-excel")
             else:
-                st.error('GitHub üzerinden dosya indirilemedi.  ')
+                st.error('7 günlük vardiya planı dosyası bulunamadı.')
     else:
         st.session_state['login_successful'] = False
         st.error('Giriş başarısız. Lütfen tekrar deneyin.')
