@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 # Excel dosyasını yükleme
-@st.cache
+@st.cache_data
 def load_data(file_path):
     return pd.read_excel(file_path)
 
@@ -17,6 +17,17 @@ weight_customers = st.sidebar.slider("Toplam Müşteriler Ağırlığı", 0.0, 1
 weight_avg_order = st.sidebar.slider("Ortalama Sipariş Değeri Ağırlığı", 0.0, 1.0, 0.1)
 weight_new_customers = st.sidebar.slider("Yeni Müşteriler Ağırlığı", 0.0, 1.0, 0.1)
 weight_product_count = st.sidebar.slider("Kampanyalı Ürün Sayısı Ağırlığı", 0.0, 1.0, 0.1)
+
+# Ağırlıkları normalize etme
+total_weight = weight_orders + weight_revenue + weight_customers + weight_avg_order + weight_new_customers + weight_product_count
+normalized_weights = {
+    'weight_orders': weight_orders / total_weight,
+    'weight_revenue': weight_revenue / total_weight,
+    'weight_customers': weight_customers / total_weight,
+    'weight_avg_order': weight_avg_order / total_weight,
+    'weight_new_customers': weight_new_customers / total_weight,
+    'weight_product_count': weight_product_count / total_weight
+}
 
 # Kampanya performansını hesaplama
 def calculate_performance(data):
@@ -39,12 +50,12 @@ def calculate_scores(data):
     data['norm_campaign_product_count'] = data['campaign_product_count'] / data['campaign_product_count'].max()
 
     data['total_score'] = (
-        data['norm_orders'] * weight_orders +
-        data['norm_revenue'] * weight_revenue +
-        data['norm_customers'] * weight_customers +
-        data['norm_avg_order_value'] * weight_avg_order +
-        data['norm_new_customers'] * weight_new_customers +
-        data['norm_campaign_product_count'] * weight_product_count
+        data['norm_orders'] * normalized_weights['weight_orders'] +
+        data['norm_revenue'] * normalized_weights['weight_revenue'] +
+        data['norm_customers'] * normalized_weights['weight_customers'] +
+        data['norm_avg_order_value'] * normalized_weights['weight_avg_order'] +
+        data['norm_new_customers'] * normalized_weights['weight_new_customers'] +
+        data['norm_campaign_product_count'] * normalized_weights['weight_product_count']
     )
     return data
 
